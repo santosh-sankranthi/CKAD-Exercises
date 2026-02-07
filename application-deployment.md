@@ -14,7 +14,7 @@ This section focuses on the Application Deployment domain of the Certified Kuber
 
 ## Questions
 
-### 1. Implement a blue/green deployment strategy
+### 1. Implement a blue/green deployment strategy - imp
 
 **Scenario**:
 - Deploy two versions of the same application named `app-blue` (version 1.0) and `app-green` (version 2.0).
