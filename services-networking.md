@@ -8,6 +8,49 @@ The Services and Networking topic in the CKAD (Certified Kubernetes Application 
 - Provide and troubleshoot access to applications via services
 - Use Ingress rules to expose applications
 
+##Topic based briefing.
+
+### 1. Network Policies
+<details>
+a NetworkPolicy is essentially a firewall for your pods. By default, Kubernetes operates on a "flat network" principle—meaning every pod can talk to every other pod across the entire cluster.
+
+While that’s great for getting things running quickly, it’s a bit of a security nightmare. NetworkPolicies allow you to implement Least Privilege networking.
+
+1. How It Works: The "Default Deny"
+Think of a NetworkPolicy as an allow-list. Once a pod is selected by a policy, it will reject any connection that isn't explicitly permitted.
+
+Isolation: Pods are "non-isolated" by default (all traffic allowed).
+
+Selection: Once you apply a policy to a pod, it becomes "isolated," and only the rules you write can let traffic in or out.
+
+2. Key Components of a Policy
+
+When you write a NetworkPolicy (in YAML), you define four main things:
+
+podSelector: Which pods does this rule apply to? (e.g., app: database)
+
+policyTypes: Does this apply to Ingress (incoming), Egress (outgoing), or both?
+
+from/to: Which sources/destinations are allowed?
+
+podSelector: Specific pods in the same namespace.
+
+namespaceSelector: Any pod within a specific namespace.
+
+ipBlock: Specific IP ranges (CIDR).
+
+ports: Which TCP/UDP ports are open? (e.g., 80, 443, 5432).
+
+3. Services:
+   
+Load balancers:
+
+these are not k8s native 
+
+
+  
+</details>
+
 ## Practice Questions
 
 ### 1. Create a Default Deny-All NetworkPolicy
