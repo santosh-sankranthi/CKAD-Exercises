@@ -1614,7 +1614,7 @@ Crucial Reminder: Whether it is "true" or "false", it must be in quotes in your 
 
 ---
 
-### 30. Sticky sessions in ingress.
+### 29.3. Sticky sessions in ingress.
 
 Normally, a Kubernetes Service load-balances requests round-robin across all available Pods. But if you have a stateful application—like a user interacting with a specific ML model loaded into memory on a KubeRay worker node—you need that user's subsequent requests to hit the exact same Pod every time.
 
