@@ -1535,6 +1535,7 @@ Does my path match my regex? If you use $2 in the target, you must have two sets
 
 Did I include use-regex: "true"? If you are doing Pattern 2, it will silently fail without this.
 
+---
 
 ### 30. Redirect HTTP to HTTPS in Ingress
 
