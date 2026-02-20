@@ -1448,7 +1448,7 @@ spec:
 </details>
 
 ---
-### 30.1 rewrite annotaion: 
+### 29.1 rewrite annotaion: 
 Your Ingress is receiving traffic on a specific path (like /billing), but your backend application is hardcoded to serve traffic from its own root directory (/). If you don't rewrite the path, the Ingress forwards the full /billing path to the app, the app says "I don't have a /billing page," and throws a 404 error.
 
 **Scenario**:
@@ -1536,6 +1536,84 @@ Does my path match my regex? If you use $2 in the target, you must have two sets
 Did I include use-regex: "true"? If you are doing Pattern 2, it will silently fail without this.
 
 ---
+
+### 29.2. SSL Redirect (ssl-redirect)
+
+description: By default, if you configure a TLS (Transport Layer Security) section in your Ingress manifest, the NGINX controller automatically assumes you want everything secure. If a user tries to access your site via plain HTTP, NGINX will automatically slap them with a 308 Permanent Redirect and send them to the HTTPS version.
+
+In the real world, this is exactly what you want. But in an exam environment, it can cause headaches.
+
+
+
+**Scenario**:
+- diable HTTPS redirect
+
+<details>
+
+
+How it's asked in the exam
+Usually, exam environments don't have valid public SSL certificates set up. The grading script or your own curl tests might fail if the Ingress forces a redirect to an HTTPS endpoint that doesn't have a trusted certificate.
+
+The Scenario: You will be asked to expose a secure application but explicitly told to "ensure the application is also accessible via HTTP" or "disable HTTPS redirection."
+
+The Solution: You need to explicitly turn off that default behavior.
+
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: no-redirect-ingress
+  annotations:
+    # This disables the automatic HTTP -> HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - secure-app.com
+    secretName: my-tls-secret
+  rules:
+  - host: secure-app.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: secure-service
+            port:
+              number: 80
+```
+
+
+```yaml
+
+```
+
+
+</details>
+
+- scenario: force secure / redirect to HTTPS
+<details>
+
+This is the second variation, and it trips people up because it involves external infrastructure (like AWS or GCP load balancers).
+
+Sometimes, the SSL certificate isn't handled by the Kubernetes Ingress itself; it's handled by a cloud load balancer sitting in front of the cluster. Because the Ingress YAML doesn't have a tls: section, NGINX won't automatically redirect HTTP traffic to HTTPS.
+
+How it's asked: "The cluster is behind an external load balancer that terminates SSL. Expose the payment-service via Ingress. Ensure that any direct HTTP requests hitting the Ingress are forcibly redirected to HTTPS."
+
+The Strategy: Since NGINX doesn't see a tls: block, it assumes HTTP is fine. You have to explicitly force it to redirect.
+
+```yaml
+nginx.ingress.kubernetes.io/ssl-redirect: "true"
+```
+</details>
+
+Crucial Reminder: Whether it is "true" or "false", it must be in quotes in your YAML, or it will throw a syntax error!
+
+---
+
 
 ### 30. Redirect HTTP to HTTPS in Ingress
 
