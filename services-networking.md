@@ -1448,6 +1448,92 @@ spec:
 </details>
 
 ---
+### 30.1 rewrite annotaion: 
+Your Ingress is receiving traffic on a specific path (like /billing), but your backend application is hardcoded to serve traffic from its own root directory (/). If you don't rewrite the path, the Ingress forwards the full /billing path to the app, the app says "I don't have a /billing page," and throws a 404 error.
+
+**Scenario**:
+- The Static Drop (Simple Rewrite).
+
+This is the most straightforward variation. The prompt will ask you to strip away a single, static path completely.
+
+How it’s asked: "Create an Ingress that routes traffic from /auth to the auth-service on port 80. The auth-service expects all traffic to arrive at its root path (/)."
+
+The Strategy: You capture the incoming path and tell the Ingress to replace the entire thing with a single forward slash.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: static-rewrite-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 80
+```
+
+
+- The Regex Capture (Dynamic Rewrite)
+
+
+This is the modern, more complex variation, and it is highly likely to appear. It happens when you need to strip the base path but keep everything that comes after it.
+
+How it’s asked: "Configure the Ingress to route /api/v1/... to the backend-api service. Ensure that any sub-paths are preserved. For example, a request to /api/v1/users/123 must be forwarded to the service as /users/123."
+
+The Strategy: You need to use Regular Expressions (Regex) to "capture" the second half of the URL and pass it to the rewrite target.
+
+The YAML Implementation:
+To do this successfully, you must add a second annotation to enable regex, and use capture groups ($1, $2, etc.) in your rewrite target.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dynamic-rewrite-ingress
+  annotations:
+    # 1. Enable Regex matching
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # 2. Rewrite using the second capture group ($2)
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # The Regex path: Match /api/v1, then capture the trailing slash ($1), then capture the rest ($2)
+      - path: /api/v1(/|$)(.*)
+        pathType: ImplementationSpecific # Note: Prefix often works, but ImplementationSpecific is safer for regex
+        backend:
+          service:
+            name: backend-api
+            port:
+              number: 80
+```
+Result: A user visits yourdomain.com/api/v1/users/123 -> The app receives a request for /users/123.
+
+The Exam "Gotcha" Checklist
+When writing these in a high-pressure environment, double-check these three things:
+
+Did I spell the annotation right? (nginx.ingress.kubernetes.io/rewrite-target).
+
+Does my path match my regex? If you use $2 in the target, you must have two sets of parentheses () in your path.
+
+Did I include use-regex: "true"? If you are doing Pattern 2, it will silently fail without this.
+
+
+
+
+
+
 
 ### 30. Redirect HTTP to HTTPS in Ingress
 
