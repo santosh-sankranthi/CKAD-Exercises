@@ -1614,6 +1614,89 @@ Crucial Reminder: Whether it is "true" or "false", it must be in quotes in your 
 
 ---
 
+### 30. Sticky sessions in ingress.
+
+Normally, a Kubernetes Service load-balances requests round-robin across all available Pods. But if you have a stateful application—like a user interacting with a specific ML model loaded into memory on a KubeRay worker node—you need that user's subsequent requests to hit the exact same Pod every time.
+
+To solve this, NGINX Ingress uses cookies to "stick" a client to a specific backend Pod.
+
+Variation 1: The Basic "Stick" (Default Settings)
+
+<details>
+
+This is the simplest form. The exam simply asks you to enable session affinity without giving you any specific constraints about the cookie itself.
+
+How it’s asked: "Configure the Ingress stateful-ingress so that a user's session is consistently routed to the same backend pod."
+
+The Strategy: You just need to turn on cookie-based affinity. NGINX will automatically create a cookie (named route by default) and handle the hashing.
+
+
+```yaml
+nginx.ingress.kubernetes.io/affinity: "cookie"
+```
+</details>
+
+Variation 2: The Custom Cookie (Named Session)
+
+<details>
+
+This is highly likely to appear. The grading script will specifically run a curl command to check if a cookie with a specific name is being returned in the HTTP headers.
+
+How it’s asked: "Update the Ingress to use session affinity. Ensure the Ingress uses a cookie named CKAD_SESSION to track the routing."
+
+The Strategy: You must enable affinity AND pass a second annotation to override the default cookie name.
+
+```yaml
+nginx.ingress.kubernetes.io/affinity: "cookie"
+nginx.ingress.kubernetes.io/session-cookie-name: "CKAD_SESSION"
+```
+</details>
+
+Variation 3: The Timed Session (Expiration/Max Age)
+
+
+<details>
+This is the "hard mode" variation. They will ask you to ensure the sticky session expires after a certain amount of time.
+
+How it’s asked: "Enable session affinity for the webapp-ingress. The session cookie must be named APP_STICKY and must expire after 2 hours (7200 seconds)."
+
+The Strategy: You need the affinity flag, the custom name flag, and a third flag to define the max age in seconds.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stateful-ingress
+  annotations:
+    # 1. Turn it on
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    # 2. Name the cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: "APP_STICKY"
+    # 3. Set the lifespan (in seconds)
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "7200"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stateful-service
+            port:
+              number: 80
+```
+
+</details>
+
+The Exam "Gotcha" Checklist
+Always stringify values: Notice how "cookie", "APP_STICKY", and "7200" are all in quotation marks. If you write max-age: 7200 as an integer, the YAML will fail to apply.
+
+Don't memorize them, know how to search: If you forget session-cookie-max-age during the test, go to the NGINX Ingress Annotations page we talked about earlier and Ctrl+F for "cookie". All the variations are grouped together on that page.
+
+---
+
 
 ### 30. Redirect HTTP to HTTPS in Ingress
 
