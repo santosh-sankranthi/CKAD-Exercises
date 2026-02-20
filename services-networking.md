@@ -1459,7 +1459,8 @@ This is the most straightforward variation. The prompt will ask you to strip awa
 How it’s asked: "Create an Ingress that routes traffic from /auth to the auth-service on port 80. The auth-service expects all traffic to arrive at its root path (/)."
 
 The Strategy: You capture the incoming path and tell the Ingress to replace the entire thing with a single forward slash.
-
+<details>
+   
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -1480,7 +1481,7 @@ spec:
             port:
               number: 80
 ```
-
+</details>
 
 - The Regex Capture (Dynamic Rewrite)
 
@@ -1493,6 +1494,8 @@ The Strategy: You need to use Regular Expressions (Regex) to "capture" the secon
 
 The YAML Implementation:
 To do this successfully, you must add a second annotation to enable regex, and use capture groups ($1, $2, etc.) in your rewrite target.
+
+<details>
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1518,7 +1521,10 @@ spec:
             port:
               number: 80
 ```
+   
 Result: A user visits yourdomain.com/api/v1/users/123 -> The app receives a request for /users/123.
+
+</details>
 
 The Exam "Gotcha" Checklist
 When writing these in a high-pressure environment, double-check these three things:
@@ -1528,11 +1534,6 @@ Did I spell the annotation right? (nginx.ingress.kubernetes.io/rewrite-target).
 Does my path match my regex? If you use $2 in the target, you must have two sets of parentheses () in your path.
 
 Did I include use-regex: "true"? If you are doing Pattern 2, it will silently fail without this.
-
-
-
-
-
 
 
 ### 30. Redirect HTTP to HTTPS in Ingress
