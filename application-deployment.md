@@ -660,6 +660,89 @@ The Effect: Creates the app-config, file-config, and db-credentials resources an
 
 </details>
 
+**PATCHES**
+Description: This is another way of changing the kubernetes config files, and unlike transformers they provide more surgical way of chaning stuff in configs, targeting one or more specific sections in a k8s resource 
+
+to create a patch 3 parameters must be provided:
+  a. Operation Type: add/remove/replace
+  b. Target: what section of resource should this be applied on??
+     1.Kind
+     2.version/group
+     3.name
+     4.namespace
+     5.labelSelector
+     6.AnnotationSelector
+  c. value: the value that is required to be added or to be replaced with (only required for adding and replacing)
+
+1.Replace operation:
+Used when a field already exists in the base YAML and you want to swap the value (like changing the number of replicas).
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: backend-api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+
+```
+</details>
+
+The add Operation
+Used to insert a brand new field or append a new item to an existing list (like adding a new environment variable to a container).
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: backend-api
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: NEW_ENV_VAR
+          value: "production"
+
+```
+
+</details>
+
+3.Used to completely delete a field or block of YAML. Notice this one doesn't require a value field because you are just erasing data.
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: backend-api
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/resources/limits
+```
+</details>
+
 ---
 
 
