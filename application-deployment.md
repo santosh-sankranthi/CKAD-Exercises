@@ -9,6 +9,7 @@ This section focuses on the Application Deployment domain of the Certified Kuber
 - Kubernetes deployment strategies (e.g., blue/green, canary)
 - Rolling updates and Deployment configurations
 - Using Helm for application deployment
+- kustomize.
 
 ---
 
@@ -527,6 +528,139 @@ helm install secret-helm-app ./helm-chart
    ```
 
 </details>
+
+---
+
+### 11. Kustomize.
+
+**Description**:
+- kustomize is a tool inbuilt into kubernetes that helps developers manage k8s config files in a better way and in a less error prone way. It is less complicated than Helm, it uses YAML, and is pretty straight forward to learn and grasp.
+
+
+
+**Scenario**:
+
+**TRASFORMERS**
+ 1. The Naming Transformers (namePrefix & nameSuffix)
+    Description: Automatically modifies the metadata.name of all resources listed in the kustomization.yaml.
+Exam Pattern to Recognize: "You have a folder of YAML files. Deploy them, but ensure all resource names start with qa- or end with -v2."
+
+
+<details>
+<summary>Declarative YAML Configuration</summary>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+
+namePrefix: qa-
+nameSuffix: -v2
+```
+
+The Effect: A Deployment originally named backend-api becomes qa-backend-api-v2. A Service named db-svc becomes qa-db-svc-v2.
+
+</details>
+
+2. The Metadata Transformers (commonLabels & commonAnnotations)
+   Description: Injects key-value pairs into the metadata of all resources. commonLabels is incredibly powerful because it also updates the spec.selector in Services and Deployments to ensure they still route traffic correctly.
+Exam Pattern to Recognize: "Ensure all resources in the /opt/k8s/app directory are labeled with env: staging and annotated with release: alpha."
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+
+commonLabels:
+  env: staging
+  tier: backend
+
+commonAnnotations:
+  release: alpha
+  contact: dev-team
+```
+The Effect: Every resource gets these labels and annotations. The Service selector will automatically be updated to look for Pods with env: staging and tier: backend.
+
+</details>
+
+3. The Environment Isolation Transformer (namespace)
+Description: Overrides or sets the metadata.namespace for all resources, regardless of what is hardcoded in their individual YAML files.
+Exam Pattern to Recognize: "Deploy the resources found in ./base into the security-core namespace without editing the base YAML files."
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - rbac.yaml
+
+namespace: security-core
+```
+The Effect: Even if deployment.yaml explicitly says namespace: default, Kustomize forces it into security-core.
+
+</details>
+
+4. The Image Tag Transformer (images)
+Description: Modifies the container image name, tag, or digest defined in a Deployment/Pod without touching the source YAML.
+Exam Pattern to Recognize: "Update the image used in the Kustomize deployment from nginx:1.14 to nginx:1.24.0."
+
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+
+images:
+  - name: nginx              # The original image name in the deployment.yaml
+    newName: nginx           # Optional: Change the image name entirely (e.g., to a private registry)
+    newTag: 1.24.0           # The new tag to apply
+```
+The Effect: The resulting Pod spec will pull nginx:1.24.0 instead of whatever was originally written in the Deployment file.
+
+</details>
+
+5. The Generators (configMapGenerator & secretGenerator)
+Description: Creates ConfigMaps or Secrets dynamically and automatically appends a unique hash to their names (e.g., app-config-8f7d6g). Kustomize then intelligently updates any Deployment referencing that ConfigMap/Secret to use the new hashed name, forcing a Pod restart if the config changes.
+Exam Pattern to Recognize: "Create a ConfigMap named app-config from the literal value PORT=8080 and ensure it is managed via Kustomize."
+
+<details>
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+
+configMapGenerator:
+  - name: app-config
+    literals:
+      - PORT=8080
+      - MODE=production
+  - name: file-config
+    files:
+      - application.properties  # Pulls from a file in the same directory
+
+secretGenerator:
+  - name: db-credentials
+    literals:
+      - password=supersecret
+```
+The Effect: Creates the app-config, file-config, and db-credentials resources and seamlessly injects their generated hashed names into the deployment.yaml volume mounts or environment variables.
+
+</details>
+
+---
 
 
 
