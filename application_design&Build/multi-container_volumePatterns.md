@@ -52,7 +52,9 @@ spec:
       mountPath: /var/log/read
 ```
 </details>
+
 **Thing where you can go wrong**
+
 > - labels names, mount names, mount paths.
 
 ---
