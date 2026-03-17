@@ -101,6 +101,7 @@ if [[ "$CMD" == *"--target=localhost"* ]]; then echo "✅ CMD configured correct
 Cleanup: docker rm -f $($CLI ps -aq --filter ancestor=net-tester:v2) 2>/dev/null; docker rmi net-tester:v2
 
 </details>
+
 ---
 
 ## Scenario 3: The Hardened Python Backend
@@ -150,6 +151,7 @@ if [[ "$ENV" == *"FLASK_ENV=production"* ]]; then echo "✅ FLASK_ENV set"; else
 Cleanup: docker rmi backend-service:prod
 
 </details>
+
 ---
 
 ## Scenario 4: The Legacy App Migration & Export
@@ -194,6 +196,7 @@ if [ -f "$TAR_PATH" ]; then echo "✅ Tarball found at $TAR_PATH"; else echo "�
 Cleanup: docker rmi batch-processor:legacy && rm -f /tmp/batch-processor.tar
 
 </details>
+
 --- 
 
 ## Scenario 5: The Multi-Stage Go API Archive
@@ -241,5 +244,90 @@ if [ -f "$TAR_PATH" ]; then echo "✅ Tarball found at $TAR_PATH"; else echo "�
 
 </details>
 
+---
+
+## Scenario 6: The Air-Gapped Bridge
+
+Combined Patterns: Image Inspection + Registry Tagging + Registry Push + Imperative Pod YAML Generation + imagePullPolicy
+
+Your Tasks:
+
+1. Inspect: Without writing a Dockerfile yet, use the CLI to inspect the official node:18-alpine image to find its default working directory. (Hint: you may need to pull it first).
+
+2. Build: Write a Dockerfile using node:18-alpine as the base. Copy server.js into whatever default working directory you found in step 1. Set the command to run node server.js. Build it as local-api:v1.
+
+3. Tag & Push: Tag the image so it targets your local registry (localhost:5000). Push the image to the registry.
+
+4. The Kubernetes Bridge: Imperatively generate a Kubernetes Pod manifest named bridge-pod.yaml.
+
+   a. The Pod must be named bridge-pod.
+ 
+   b. It must use the local-api:v1 image (the local cache version, not the registry version).
+
+   c. Crucial Step: You must manually edit the YAML to ensure Kubernetes will NOT try to pull this image from the internet, as it only exists on your local machine.
+
+<details>
+  
+  <summary><b>config and testcase checker</b></summary>
+  
+setup:
+
+```yaml
+docker run -d -p 5000:5000 --name local-registry registry:2
+```
+
+```yaml
+const http = require('http');
+http.createServer((req, res) => {
+  res.write('Air-gapped bridge active!');
+  res.end();
+}).listen(8080);
+```
+
+test:
+
+```yaml
+#!/bin/bash
+CLI="docker"
+IMAGE_LOCAL="local-api:v1"
+IMAGE_REMOTE="localhost:5000/local-api:v1"
+YAML_FILE="bridge-pod.yaml"
+
+echo "Checking Scenario 6..."
+
+# 1. Check if the local image exists
+if ! $CLI image inspect $IMAGE_LOCAL >/dev/null 2>&1; then 
+    echo "❌ Local image $IMAGE_LOCAL not found"
+    exit 1
+else 
+    echo "✅ Local image built"
+fi
+
+# 2. Check if the image was pushed to the local registry
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/v2/local-api/tags/list)
+if [ "$HTTP_STATUS" -eq 200 ]; then 
+    echo "✅ Image successfully pushed to localhost:5000"
+else 
+    echo "❌ Image not found in local registry"
+fi
+
+# 3. Check the Kubernetes YAML bridge
+if [ -f "$YAML_FILE" ]; then
+    echo "✅ YAML manifest $YAML_FILE found"
+    
+    # Check for correct imagePullPolicy
+    if grep -q "imagePullPolicy: Never" "$YAML_FILE" || grep -q "imagePullPolicy: IfNotPresent" "$YAML_FILE"; then
+        echo "✅ imagePullPolicy correctly set to prevent remote pull failures"
+    else
+        echo "❌ imagePullPolicy is missing or incorrect. The Pod will crash with ErrImagePull!"
+    fi
+else
+    echo "❌ YAML manifest $YAML_FILE not found"
+fi
+```
+
+clean-up command: docker rm -f local-registry && docker rmi local-api:v1 localhost:5000/local-api:v1 node:18-alpine && rm -f bridge-pod.yaml server.js Dockerfile
+
+</details>
 
 
