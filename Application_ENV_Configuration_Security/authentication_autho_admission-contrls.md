@@ -198,6 +198,114 @@ rm isolated.yaml
 
 ---
 
+### Task 4: Troubleshooting Quotas and Scheduling (The "Pending" Trap)
+
+**1. CKAD Style Question:**
+You have been assigned to fix a broken environment. A Deployment named `heavy-calc` in the `crunch-ns` namespace was supposed to scale to 2 replicas, but developers are reporting that the application is down.
+
+1. Investigate the namespace and the deployment to find out why the Pods are failing to schedule.
+2. Edit the Deployment to fix the underlying issue.
+3. The containers must be reconfigured to request exactly `100m` of CPU and `50Mi` of memory, with a strict limit of `200m` CPU and `100Mi` memory.
+4. Verify that exactly 2 Pods are in the `Running` state.
+
+**2. Setup Script:**
+*(Run this to intentionally break your cluster for the drill)*
+
+```bash
+kubectl create ns crunch-ns
+# Create a strict quota
+kubectl create quota crunch-quota --hard=pods=2,requests.cpu=1,requests.memory=1Gi,limits.cpu=2,limits.memory=2Gi -n crunch-ns
+# Create a deployment that violently violates this quota
+cat <<EOF > broken-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heavy-calc
+  namespace: crunch-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: heavy-calc
+  template:
+    metadata:
+      labels:
+        app: heavy-calc
+    spec:
+      containers:
+      - name: calc
+        image: nginx:alpine
+        resources:
+          requests:
+            cpu: "5"  # This is asking for 5 whole CPU cores per pod!
+EOF
+kubectl apply -f broken-deploy.yaml
+rm broken-deploy.yaml
+
+```
+
+**3. Testcase Script:**
+
+```bash
+#!/bin/bash
+echo "--- Testing Task 4 ---"
+[ "$(kubectl get deploy heavy-calc -n crunch-ns -o jsonpath='{.status.readyReplicas}')" == "2" ] && echo "✅ 2 Replicas are Running" || echo "❌ Pods are not fully running"
+[ "$(kubectl get deploy heavy-calc -n crunch-ns -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}')" == "100m" ] && echo "✅ CPU Request fixed" || echo "❌ CPU Request is incorrect"
+[ "$(kubectl get deploy heavy-calc -n crunch-ns -o jsonpath='{.spec.template.spec.containers[0].resources.limits.memory}')" == "100Mi" ] && echo "✅ Memory Limit fixed" || echo "❌ Memory Limit is incorrect"
+
+```
+
+<details>
+
+**4. Solution:**
+
+```bash
+# 1. Investigate the Deployment. 
+# You will see 0/2 ready. Why? Let's check the events of the ReplicaSet.
+kubectl describe deploy heavy-calc -n crunch-ns
+# Look closely at the events or conditions. If it doesn't tell you enough, check the ReplicaSet directly:
+kubectl get rs -n crunch-ns
+kubectl describe rs <insert-replicaset-name> -n crunch-ns
+# The Events will scream: "Warning  FailedCreate ... Error creating: pods "heavy-calc-xxx" is forbidden: exceeded quota: crunch-quota, requested: requests.cpu=5, used: requests.cpu=0, limited: requests.cpu=1"
+
+# 2. Fix the Deployment live in the cluster
+kubectl edit deploy heavy-calc -n crunch-ns
+
+```
+
+*In the vim editor that opens, scroll down to the `resources` block and fix it to match the requested parameters:*
+
+```yaml
+        resources:
+          requests:
+            cpu: 100m        # Changed from "5"
+            memory: 50Mi     # Added
+          limits:            # Added limits block
+            cpu: 200m
+            memory: 100Mi
+
+```
+
+```bash
+# Save and quit vim (:wq). The deployment will automatically roll out the new, fixed pods.
+
+# 3. Verify they are running
+kubectl get pods -n crunch-ns
+
+```
+
+</details>
+
+**5. Clean-up Script:**
+
+```bash
+kubectl delete ns crunch-ns
+
+```
+
+---
+
+
 ### Pro-Tip for the Exam
 
 Never waste time writing Role or RoleBinding YAMLs from scratch. The imperative commands (`kubectl create role ...` and `kubectl create rolebinding ...`) are significantly faster and eliminate the chance of indentation errors.
