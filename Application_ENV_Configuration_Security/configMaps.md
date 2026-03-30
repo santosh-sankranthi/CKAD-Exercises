@@ -487,4 +487,61 @@ kubectl apply -f flex.yaml
 kubectl delete pod flex-app
 rm -f flex.yaml
 ```
+----
+
+
+#### Variation 3.2: The Immutable ConfigMap Trap
+
+**1. CKAD Style Question:**
+Create a ConfigMap named `locked-config` containing the key-value pair `environment=production`.
+Configure this ConfigMap so that its data cannot be accidentally updated or altered by other users. (You must make the ConfigMap immutable).
+
+**2. Setup Script:**
+*(None required)*
+
+**3. Testcase Script:**
+
+```bash
+#!/bin/bash
+echo "--- Testing Variation 3.2 ---"
+[ "$(kubectl get cm locked-config -o jsonpath='{.immutable}')" == "true" ] && echo "✅ ConfigMap successfully set to immutable" || echo "❌ Immutable flag missing or false"
+# Try to break it to prove it works
+kubectl patch cm locked-config -p '{"data":{"environment":"staging"}}' 2>&1 | grep -q "Forbidden" && echo "✅ Verified: API server rejected the modification" || echo "❌ FAILED: ConfigMap allowed modification"
+```
+
+<details>
+
+4. Solution:
+
+```bash
+# There is no imperative flag for '--immutable', so you must generate the YAML and edit it!
+kubectl create configmap locked-config --from-literal=environment=production --dry-run=client -o yaml > immutable.yaml
+
+vi immutable.yaml
+```
+
+*Add the `immutable: true` flag at the root level of the YAML (at the same indentation as `apiVersion` and `kind`):*
+
+```yaml
+apiVersion: v1
+data:
+  environment: production
+kind: ConfigMap
+metadata:
+  name: locked-config
+immutable: true             # ADD THIS EXACT LINE
+```
+
+```bash
+kubectl apply -f immutable.yaml
+```
+
+</details>
+
+**5. Clean-up Script:**
+
+```bash
+kubectl delete cm locked-config
+rm -f immutable.yaml
+```
 
