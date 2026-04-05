@@ -99,6 +99,7 @@ kubectl apply -f custom-cron.yaml
 
 ```bash
 kubectl delete crontab nightly-backup
+kubectl delete crd crontabs.stable.example.com
 rm -f custom-cron.yaml
 # We leave the CRD installed for the variations!
 ```
