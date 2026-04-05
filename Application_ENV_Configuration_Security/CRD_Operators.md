@@ -58,10 +58,9 @@ sleep 2
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
 echo "--- Testing Main Task 1 ---"
-[ "$(kubectl get crontab nightly-backup -o jsonpath='{.spec.cronSpec}')" == "0 0 * * *" ] && echo "✅ cronSpec matches" || echo "❌ cronSpec failed"
-[ "$(kubectl get crontab nightly-backup -o jsonpath='{.spec.image}')" == "backup-runner:v2" ] && echo "✅ image matches" || echo "❌ image failed"
+[[ "$(kubectl get crontab nightly-backup -o jsonpath='{.spec.cronSpec}' 2>/dev/null)" == "0 0 * * *" ]] && echo "✅ cronSpec matches" || echo "❌ cronSpec failed"
+[[ "$(kubectl get crontab nightly-backup -o jsonpath='{.spec.image}' 2>/dev/null)" == "backup-runner:v2" ]] && echo "✅ image matches" || echo "❌ image failed"
 ```
 
 <details>
