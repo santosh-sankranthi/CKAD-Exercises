@@ -6,6 +6,10 @@ It includes all 3 Main Tasks and their 6 Variations, ordered from the most repea
 
 -----
 
+### Task 0: creating CRD
+
+Create a CRD for kind Pipeline in group ci.io, namespaced, shortname pl. Version v1. Spec fields: branch (string), trigger (string), timeout (integer). Add printer columns showing branch as Branch and timeout as Timeout. Create a CR called main-pipeline with branch: main, trigger: push, timeout: 300.
+
 ### Task 1: Discover, Deconstruct, and Deploy (Most Repeating)
 
 This is the classic CRD exam question. You are dropped into a cluster, told a custom extension exists, and asked to create an object using it. You must use `kubectl get` and `kubectl explain` to figure out the schema on the fly.
