@@ -33,8 +33,8 @@ Finally, deploy a Pod named `test-pod` using the `nginx` image that runs as the 
 ```bash
 #!/bin/bash
 echo "--- Testing Main Task 1 ---"
-[ "$(kubectl auth can-i list pods --as=system:serviceaccount:sec-ns:api-accessor -n sec-ns)" == "yes" ] && echo "✅ RBAC successfully configured" || echo "❌ RBAC failed"
-[ "$(kubectl get pod test-pod -n sec-ns -o jsonpath='{.spec.serviceAccountName}')" == "api-accessor" ] && echo "✅ Pod is using correct ServiceAccount" || echo "❌ Pod ServiceAccount failed"
+[[ "$(kubectl auth can-i list pods --as=system:serviceaccount:sec-ns:api-accessor -n sec-ns)" == "yes" ]] && echo "✅ RBAC successfully configured" || echo "❌ RBAC failed"
+[["$(kubectl get pod test-pod -n sec-ns -o jsonpath='{.spec.serviceAccountName}')" == "api-accessor" ]] && echo "✅ Pod is using correct ServiceAccount" || echo "❌ Pod ServiceAccount failed"
 ```
 
 <details>
