@@ -139,8 +139,8 @@ kubectl create role developer-role --verb=create --resource=pods
 ```bash
 #!/bin/bash
 echo "--- Testing Variation 1.2 ---"
-[ "$(kubectl get rolebinding jane-binding -o jsonpath='{.subjects[0].kind}')" == "User" ] && echo "✅ Subject Kind is User" || echo "❌ Subject Kind is not User"
-[ "$(kubectl get rolebinding jane-binding -o jsonpath='{.subjects[0].name}')" == "jane" ] && echo "✅ Subject Name is jane" || echo "❌ Subject Name is incorrect"
+[[ "$(kubectl get rolebinding jane-binding -o jsonpath='{.subjects[0].kind}')" == "User" ]] && echo "✅ Subject Kind is User" || echo "❌ Subject Kind is not User"
+[[ "$(kubectl get rolebinding jane-binding -o jsonpath='{.subjects[0].name}')" == "jane" ]] && echo "✅ Subject Name is jane" || echo "❌ Subject Name is incorrect"
 ```
 
 <details>
