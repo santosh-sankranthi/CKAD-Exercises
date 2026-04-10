@@ -226,10 +226,9 @@ kubectl create serviceaccount auditor
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
 echo "--- Testing Variation 2.1 ---"
-[ "$(kubectl auth can-i get pods --as=system:serviceaccount:default:auditor -n finance)" == "yes" ] && echo "✅ Access granted in finance namespace" || echo "❌ Access failed in finance namespace"
-[ "$(kubectl auth can-i get pods --as=system:serviceaccount:default:auditor -n default)" == "no" ] && echo "✅ Access properly denied in other namespaces (Trap Avoided!)" || echo "❌ FAILED: Access granted globally. You used a ClusterRoleBinding instead of a RoleBinding!"
+[[ "$(kubectl auth can-i get pods --as=system:serviceaccount:default:auditor -n finance)" == "yes" ]] && echo '✅ Access granted in finance namespace' || echo '❌ Access failed in finance namespace'
+[[ "$(kubectl auth can-i get pods --as=system:serviceaccount:default:auditor -n default)" == "no" ]] && echo '✅ Access properly denied in other namespaces (Trap Avoided)' || echo '❌ FAILED: Access granted globally. You used a ClusterRoleBinding instead of a RoleBinding!'
 ```
 
 <details>
