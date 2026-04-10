@@ -101,8 +101,8 @@ This Role must grant the `create`, `update`, and `delete` verbs. However, it mus
 ```bash
 #!/bin/bash
 echo "--- Testing Variation 1.1 ---"
-[ "$(kubectl get role app-manager -o jsonpath='{.rules[0].apiGroups[0]}')" == "apps" ] && echo "✅ API Group 'apps' correctly identified" || echo "❌ API Group failed"
-[ "$(kubectl get role app-manager -o jsonpath='{.rules[0].resources[*]}')" == "deployments statefulsets" ] && echo "✅ Resources correctly identified" || echo "❌ Resources failed"
+[[ "$(kubectl get role app-manager -o jsonpath='{.rules[0].apiGroups[0]}')" == "apps" ]] && echo "✅ API Group 'apps' correctly identified" || echo "❌ API Group failed"
+[[ "$(kubectl get role app-manager -o jsonpath='{.rules[0].resources[*]}')" == "deployments statefulsets" ]] && echo "✅ Resources correctly identified" || echo "❌ Resources failed"
 ```
 
 <details>
