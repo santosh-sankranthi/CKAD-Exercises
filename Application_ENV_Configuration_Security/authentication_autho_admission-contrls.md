@@ -182,7 +182,7 @@ Bind the `storage-manager` ServiceAccount to the `pv-admin` ClusterRole globally
 ```bash
 #!/bin/bash
 echo "--- Testing Main Task 2 ---"
-[ "$(kubectl auth can-i list pv --as=system:serviceaccount:default:storage-manager)" == "yes" ] && echo "✅ Cluster-wide access granted" || echo "❌ Cluster RBAC failed"
+[[ "$(kubectl auth can-i list pv --as=system:serviceaccount:default:storage-manager)" == "yes" ]] && echo "✅ Cluster-wide access granted" || echo "❌ Cluster RBAC failed"
 ```
 
 <details>
