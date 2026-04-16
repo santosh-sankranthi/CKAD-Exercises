@@ -275,7 +275,7 @@ Configure the Pod so that the default ServiceAccount token is **not** automatica
 ```bash
 #!/bin/bash
 echo "--- Testing Main Task 3 ---"
-[ "$(kubectl get pod isolated-pod -o jsonpath='{.spec.automountServiceAccountToken}')" == "false" ] && echo "✅ Token automount disabled on Pod" || echo "❌ Token is still mounting"
+[[ "$(kubectl get pod isolated-pod -o jsonpath='{.spec.automountServiceAccountToken}')" == "false" ]] && echo "✅ Token automount disabled on Pod" || echo "❌ Token is still mounting"
 ```
 
 <details>
@@ -333,7 +333,7 @@ Create a ServiceAccount named `paranoid-sa`. Modify the ServiceAccount object it
 ```bash
 #!/bin/bash
 echo "--- Testing Variation 3.1 ---"
-[ "$(kubectl get serviceaccount paranoid-sa -o jsonpath='{.automountServiceAccountToken}')" == "false" ] && echo "✅ Token automount disabled on ServiceAccount" || echo "❌ ServiceAccount configuration failed"
+[[ "$(kubectl get serviceaccount paranoid-sa -o jsonpath='{.automountServiceAccountToken}')" == "false" ]] && echo "✅ Token automount disabled on ServiceAccount" || echo "❌ ServiceAccount configuration failed"
 ```
 
 <details>
@@ -386,7 +386,7 @@ kubectl create rolebinding ci-binding --role=ci-role --serviceaccount=default:ci
 ```bash
 #!/bin/bash
 echo "--- Testing Main Task 4 ---"
-[ "$(kubectl auth can-i delete deployments --as=system:serviceaccount:default:ci-cd-bot)" == "yes" ] && echo "✅ ci-cd-bot can now delete deployments!" || echo "❌ Authorization still failing"
+[[ "$(kubectl auth can-i delete deployments --as=system:serviceaccount:default:ci-cd-bot)" == "yes" ]] && echo "✅ ci-cd-bot can now delete deployments!" || echo "❌ Authorization still failing"
 ```
 
 <details>
@@ -450,7 +450,7 @@ Configure the built-in Pod Security Admission controller to **enforce** the `res
 ```bash
 #!/bin/bash
 echo "--- Testing Main Task 5 ---"
-[ "$(kubectl get ns secure-workload -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/enforce}')" == "restricted" ] && echo "✅ Admission Controller enforcement label applied" || echo "❌ Enforcement label missing"
+[["$(kubectl get ns secure-workload -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/enforce}')" == "restricted" ]] && echo "✅ Admission Controller enforcement label applied" || echo "❌ Enforcement label missing"
 ```
 
 <details>
@@ -494,8 +494,8 @@ kubectl create ns legacy-apps
 ```bash
 #!/bin/bash
 echo "--- Testing Variation 5.1 ---"
-[ "$(kubectl get ns legacy-apps -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/warn}')" == "baseline" ] && echo "✅ Warn mode successfully configured" || echo "❌ Warn mode missing"
-[ "$(kubectl get ns legacy-apps -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/audit}')" == "baseline" ] && echo "✅ Audit mode successfully configured" || echo "❌ Audit mode missing"
+[[ "$(kubectl get ns legacy-apps -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/warn}')" == "baseline" ]] && echo "✅ Warn mode successfully configured" || echo "❌ Warn mode missing"
+[["$(kubectl get ns legacy-apps -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/audit}')" == "baseline" ]] && echo "✅ Audit mode successfully configured" || echo "❌ Audit mode missing"
 ```
 
 <details>
