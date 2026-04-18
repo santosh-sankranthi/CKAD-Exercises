@@ -27,10 +27,9 @@ Define the resource requirements so that the container:
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Main Task 1 ---"
-[ "$(kubectl get pod resource-pod -o jsonpath='{.spec.containers[0].resources.requests.cpu}')" == "100m" ] && echo "✅ CPU Request configured" || echo "❌ CPU Request failed"
-[ "$(kubectl get pod resource-pod -o jsonpath='{.spec.containers[0].resources.limits.memory}')" == "128Mi" ] && echo "✅ Memory Limit configured" || echo "❌ Memory Limit failed"
+
+[[ "$(kubectl get pod resource-pod -o jsonpath='{.spec.containers[0].resources.requests.cpu}')" == "100m" ]] && echo "✅ CPU Request configured" || echo "❌ CPU Request failed"
+[[ "$(kubectl get pod resource-pod -o jsonpath='{.spec.containers[0].resources.limits.memory}')" == "128Mi" ]] && echo "✅ Memory Limit configured" || echo "❌ Memory Limit failed"
 ```
 
 <details>
@@ -92,9 +91,8 @@ Create a Pod named `strict-qos` using the `redis` image. Configure its resources
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Variation 1.1 ---"
-[ "$(kubectl get pod strict-qos -o jsonpath='{.status.qosClass}')" == "Guaranteed" ] && echo "✅ QoS Class is Guaranteed!" || echo "❌ QoS Class is NOT Guaranteed"
+
+[[ "$(kubectl get pod strict-qos -o jsonpath='{.status.qosClass}')" == "Guaranteed" ]] && echo "✅ QoS Class is Guaranteed!" || echo "❌ QoS Class is NOT Guaranteed"
 ```
 
 <details>
@@ -158,11 +156,9 @@ Configure the quota to enforce the following hard limits for the entire namespac
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Main Task 2 ---"
-[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.pods}')" == "4" ] && echo "✅ Pod limit configured" || echo "❌ Pod limit failed"
-[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.requests\.cpu}')" == "1" ] && echo "✅ CPU requests configured" || echo "❌ CPU requests failed"
-[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.limits\.memory}')" == "2Gi" ] && echo "✅ Memory limits configured" || echo "❌ Memory limits failed"
+[[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.pods}')" == "4" ]] && echo "✅ Pod limit configured" || echo "❌ Pod limit failed"
+[[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.requests\.cpu}')" == "1" ]] && echo "✅ CPU requests configured" || echo "❌ CPU requests failed"
+[[ "$(kubectl get quota dev-quota -n dev-ns -o jsonpath='{.spec.hard.limits\.memory}')" == "2Gi" ]] && echo "✅ Memory limits configured" || echo "❌ Memory limits failed"
 ```
 
 <details>
@@ -203,8 +199,6 @@ kubectl create quota strict-quota --hard=limits.cpu=1,limits.memory=1Gi -n restr
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Variation 2.1 ---"
 kubectl get pod quota-survivor -n restricted-ns >/dev/null 2>&1 && echo "✅ Pod successfully scheduled bypassing quota" || echo "❌ Pod failed to schedule (Did you forget limits?)"
 ```
 
@@ -263,10 +257,8 @@ Next, create a Pod named `blank-pod` (`nginx` image) without specifying any reso
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Main Task 3 ---"
-[ "$(kubectl get pod blank-pod -n auto-limit-ns -o jsonpath='{.spec.containers[0].resources.requests.memory}')" == "128Mi" ] && echo "✅ Default Memory Request automatically injected!" || echo "❌ Injection failed"
-[ "$(kubectl get pod blank-pod -n auto-limit-ns -o jsonpath='{.spec.containers[0].resources.limits.memory}')" == "256Mi" ] && echo "✅ Default Memory Limit automatically injected!" || echo "❌ Injection failed"
+[[ "$(kubectl get pod blank-pod -n auto-limit-ns -o jsonpath='{.spec.containers[0].resources.requests.memory}')" == "128Mi" ]] && echo "✅ Default Memory Request automatically injected!" || echo "❌ Injection failed"
+[[ "$(kubectl get pod blank-pod -n auto-limit-ns -o jsonpath='{.spec.containers[0].resources.limits.memory}')" == "256Mi" ]] && echo "✅ Default Memory Limit automatically injected!" || echo "❌ Injection failed"
 ```
 
 <details>
@@ -326,8 +318,8 @@ Configure it to ensure that no container can be created that requests less than 
 ```bash
 #!/bin/bash
 echo "--- Testing Variation 3.1 ---"
-[ "$(kubectl get limitrange size-constraint -o jsonpath='{.spec.limits[0].max.memory}')" == "500Mi" ] && echo "✅ Max constraint configured" || echo "❌ Max constraint failed"
-[ "$(kubectl get limitrange size-constraint -o jsonpath='{.spec.limits[0].min.memory}')" == "50Mi" ] && echo "✅ Min constraint configured" || echo "❌ Min constraint failed"
+[[ "$(kubectl get limitrange size-constraint -o jsonpath='{.spec.limits[0].max.memory}')" == "500Mi" ]] && echo "✅ Max constraint configured" || echo "❌ Max constraint failed"
+[[ "$(kubectl get limitrange size-constraint -o jsonpath='{.spec.limits[0].min.memory}')" == "50Mi" ]] && echo "✅ Min constraint configured" || echo "❌ Min constraint failed"
 ```
 
 <details>
@@ -377,8 +369,6 @@ Then, create a Deployment `auto-web` (`nginx`) and an HPA targeting `50%` CPU ut
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Variation 3.2 ---"
 kubectl get hpa auto-web >/dev/null 2>&1 && echo "✅ HPA successfully created (bypassed request requirement via LimitRange)" || echo "❌ HPA failed"
 ```
 
@@ -436,9 +426,7 @@ Configure the container's resource limits so that it cannot consume more than `1
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Main Task 4 ---"
-[ "$(kubectl get pod log-spammer -o jsonpath='{.spec.containers[0].resources.limits.ephemeral-storage}')" == "1Gi" ] && echo "✅ Ephemeral storage limit configured correctly" || echo "❌ Ephemeral storage limit missing or incorrect"
+[["$(kubectl get pod log-spammer -o jsonpath='{.spec.containers[0].resources.limits.ephemeral-storage}')" == "1Gi" ]] && echo "✅ Ephemeral storage limit configured correctly" || echo "❌ Ephemeral storage limit missing or incorrect"
 ```
 
 <details>
@@ -506,10 +494,8 @@ Enforce the following hard limits so developers cannot drain the cluster's SAN:
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Main Task 5 ---"
-[ "$(kubectl get quota storage-cap -n data-science -o jsonpath='{.spec.hard.persistentvolumeclaims}')" == "2" ] && echo "✅ PVC count limit configured" || echo "❌ PVC count failed"
-[ "$(kubectl get quota storage-cap -n data-science -o jsonpath='{.spec.hard.requests\.storage}')" == "10Gi" ] && echo "✅ Total storage limit configured" || echo "❌ Total storage limit failed"
+[[ "$(kubectl get quota storage-cap -n data-science -o jsonpath='{.spec.hard.persistentvolumeclaims}')" == "2" ]] && echo "✅ PVC count limit configured" || echo "❌ PVC count failed"
+[[ "$(kubectl get quota storage-cap -n data-science -o jsonpath='{.spec.hard.requests\.storage}')" == "10Gi" ]] && echo "✅ Total storage limit configured" || echo "❌ Total storage limit failed"
 ```
 
 <details>
@@ -547,11 +533,9 @@ Create a LimitRange named `pvc-boundaries`. Configure it to enforce a `min` PVC 
 **3. Testcase Script:**
 
 ```bash
-#!/bin/bash
-echo "--- Testing Variation 5.1 ---"
-[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].type}')" == "PersistentVolumeClaim" ] && echo "✅ LimitRange targeting PVCs" || echo "❌ Target type is incorrect"
-[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].min.storage}')" == "1Gi" ] && echo "✅ Minimum storage boundary set" || echo "❌ Min storage failed"
-[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].max.storage}')" == "5Gi" ] && echo "✅ Maximum storage boundary set" || echo "❌ Max storage failed"
+[[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].type}')" == "PersistentVolumeClaim" ]] && echo "✅ LimitRange targeting PVCs" || echo "❌ Target type is incorrect"
+[[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].min.storage}')" == "1Gi" ]] && echo "✅ Minimum storage boundary set" || echo "❌ Min storage failed"
+[[ "$(kubectl get limitrange pvc-boundaries -o jsonpath='{.spec.limits[0].max.storage}')" == "5Gi" ]] && echo "✅ Maximum storage boundary set" || echo "❌ Max storage failed"
 ```
 
 <details>
