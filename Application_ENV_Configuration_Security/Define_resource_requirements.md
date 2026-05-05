@@ -1,5 +1,7 @@
 ## Define Resource Requirements
 
+> *This file covers per-container **Requests, Limits, and QoS classes**. For cluster-level enforcement via **ResourceQuotas** and **LimitRanges**, see [understand_requests_limits_quotas.md](./understand_requests_limits_quotas.md).*
+
 ### Task 1: Baseline Requests, Limits, and QoS (Most Repeating)
 
 The absolute foundation of this topic is defining exactly what a pod *needs* to start (Request) and the absolute maximum it is *allowed* to use before being throttled or killed (Limit).

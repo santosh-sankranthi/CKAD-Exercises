@@ -245,6 +245,44 @@ kubectl create svc externalname legacy-db --external-name=legacy-db.internal.cor
 kubectl delete svc legacy-db
 ```
 
+#### Variation 2.3: The LoadBalancer Service
+**1. CKAD Style Question:**
+Create a Deployment named `public-web` using the `nginx` image.
+Expose it externally using a `LoadBalancer` Service named `public-lb` on port `80`.
+
+**2. Setup Script:**
+*(None required)*
+
+**3. Testcase Script:**
+```bash
+#!/bin/bash
+echo "--- Testing Variation 2.3 ---"
+[ "$(kubectl get svc public-lb -o jsonpath='{.spec.type}')" == "LoadBalancer" ] && echo "✅ Service is LoadBalancer" || echo "❌ Service type failed"
+[ "$(kubectl get svc public-lb -o jsonpath='{.spec.ports[0].port}')" == "80" ] && echo "✅ Port is 80" || echo "❌ Port failed"
+```
+
+<details>
+
+**4. Solution:**
+```bash
+# 1. Create the deployment
+kubectl create deployment public-web --image=nginx
+
+# 2. Expose with LoadBalancer type. The --type flag is the key!
+kubectl expose deployment public-web --name=public-lb --port=80 --type=LoadBalancer
+
+# Note: On a local cluster (Minikube/Kind), the EXTERNAL-IP will remain <pending>.
+# On the real exam (cloud-backed), it will be assigned automatically.
+```
+
+</details>
+
+**5. Clean-up Script:**
+```bash
+kubectl delete deploy public-web
+kubectl delete svc public-lb
+```
+
 ---
 
 ### Group 3: Troubleshooting Services (The Disconnects)
@@ -389,5 +427,4 @@ rm ep.yaml
 
 ---
 
-That gives you 100% mechanical coverage for the creation, modification, and troubleshooting of Kubernetes Services. 
-
+That gives you 100% mechanical coverage for the creation, modification, and troubleshooting of Kubernetes Services — including all four types: ClusterIP, NodePort, LoadBalancer, and ExternalName.

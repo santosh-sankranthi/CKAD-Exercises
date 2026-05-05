@@ -6,9 +6,111 @@ It includes all 3 Main Tasks and their 6 Variations, ordered from the most repea
 
 -----
 
-### Task 0: creating CRD
+### Task 0: Creating a CRD from Scratch (The Definition Side)
 
-Create a CRD for kind Pipeline in group ci.io, namespaced, shortname pl. Version v1. Spec fields: branch (string), trigger (string), timeout (integer). Add printer columns showing branch as Branch and timeout as Timeout. Create a CR called main-pipeline with branch: main, trigger: push, timeout: 300.
+Most exam questions give you a pre-installed CRD and ask you to create objects from it. But you must also know how to *write* the CRD itself. There is no imperative command for this—you must know the YAML template.
+
+**1. CKAD Style Question:**
+Create a Custom Resource Definition with the following specifications:
+* Kind: `Pipeline`, Group: `ci.io`, Version: `v1`, Scope: `Namespaced`
+* Short name: `pl`
+* Spec fields: `branch` (string), `trigger` (string), `timeout` (integer)
+* Printer columns: show `branch` as "Branch" and `timeout` as "Timeout"
+
+After the CRD is created, create a Custom Resource named `main-pipeline` with `branch: main`, `trigger: push`, `timeout: 300`.
+
+**2. Setup Script:**
+*(None required)*
+
+**3. Testcase Script:**
+```bash
+#!/bin/bash
+echo "--- Testing Task 0 ---"
+[ "$(kubectl get crd pipelines.ci.io -o jsonpath='{.spec.group}')" == "ci.io" ] && echo "✅ CRD group is ci.io" || echo "❌ CRD group incorrect"
+[ "$(kubectl get pipeline main-pipeline -o jsonpath='{.spec.branch}')" == "main" ] && echo "✅ CR branch is main" || echo "❌ CR branch incorrect"
+[ "$(kubectl get pipeline main-pipeline -o jsonpath='{.spec.timeout}')" == "300" ] && echo "✅ CR timeout is 300" || echo "❌ CR timeout incorrect"
+# Verify printer columns show up in kubectl get output
+kubectl get pipeline main-pipeline | grep -q "main" && echo "✅ Printer column Branch visible" || echo "❌ Printer column missing"
+```
+
+<details>
+
+**4. Solution:**
+```bash
+# 1. Create the CRD YAML (no imperative command exists for CRDs!)
+vi pipeline-crd.yaml
+```
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pipelines.ci.io            # MUST be <plural>.<group>
+spec:
+  group: ci.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                branch:
+                  type: string
+                trigger:
+                  type: string
+                timeout:
+                  type: integer
+      additionalPrinterColumns:     # Printer columns for kubectl get
+      - name: Branch
+        type: string
+        jsonPath: .spec.branch
+      - name: Timeout
+        type: integer
+        jsonPath: .spec.timeout
+  scope: Namespaced
+  names:
+    plural: pipelines
+    singular: pipeline
+    kind: Pipeline
+    shortNames:
+    - pl
+```
+```bash
+kubectl apply -f pipeline-crd.yaml
+sleep 2
+
+# 2. Create the Custom Resource instance
+vi main-pipeline.yaml
+```
+```yaml
+apiVersion: ci.io/v1
+kind: Pipeline
+metadata:
+  name: main-pipeline
+spec:
+  branch: main
+  trigger: push
+  timeout: 300
+```
+```bash
+kubectl apply -f main-pipeline.yaml
+
+# 3. Verify with the short name
+kubectl get pl
+```
+
+</details>
+
+**5. Clean-up Script:**
+```bash
+kubectl delete pipeline main-pipeline
+kubectl delete crd pipelines.ci.io
+rm pipeline-crd.yaml main-pipeline.yaml
+```
 
 ### Task 1: Discover, Deconstruct, and Deploy (Most Repeating)
 

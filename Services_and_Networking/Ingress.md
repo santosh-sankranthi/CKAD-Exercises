@@ -283,4 +283,141 @@ kubectl delete svc app-svc error-page-svc
 
 ---
 
-By leveraging the `--rule` flag (`kubectl create ingress <name> --rule="host/path=svc:port"`), you can bypass writing 20 lines of highly nested YAML for almost every Ingress question on the exam. 
+### Group 4: TLS Termination (HTTPS Ingress)
+The exam will ask you to secure an Ingress with TLS. This requires wiring a Kubernetes TLS Secret into the Ingress `tls:` block. The combination of creating the Secret and configuring the Ingress is a high-frequency composite question.
+
+#### Main Task 4: Single-Host TLS
+**1. CKAD Style Question:**
+A TLS certificate and key already exist at `/opt/tls.crt` and `/opt/tls.key`.
+1. Create a TLS Secret named `shop-tls` from these files.
+2. Create an Ingress named `shop-ingress`. It must route traffic for the host `shop.example.com` on the path `/` (Prefix) to the Service `shop-svc` on port `80`. The Ingress must terminate TLS using the `shop-tls` Secret.
+
+**2. Setup Script:**
+```bash
+sudo mkdir -p /opt && sudo chmod 777 /opt
+# Generate a self-signed cert for testing
+openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+  -keyout /opt/tls.key -out /opt/tls.crt \
+  -subj "/CN=shop.example.com" 2>/dev/null
+kubectl create svc clusterip shop-svc --tcp=80:80
+```
+
+**3. Testcase Script:**
+```bash
+#!/bin/bash
+echo "--- Testing Main Task 4 ---"
+[ "$(kubectl get secret shop-tls -o jsonpath='{.type}')" == "kubernetes.io/tls" ] && echo "✅ TLS Secret created" || echo "❌ TLS Secret missing or wrong type"
+[ "$(kubectl get ingress shop-ingress -o jsonpath='{.spec.tls[0].secretName}')" == "shop-tls" ] && echo "✅ Ingress TLS wired to shop-tls" || echo "❌ TLS block missing from Ingress"
+[ "$(kubectl get ingress shop-ingress -o jsonpath='{.spec.tls[0].hosts[0]}')" == "shop.example.com" ] && echo "✅ TLS host matches" || echo "❌ TLS host incorrect"
+```
+
+<details>
+
+**4. Solution:**
+```bash
+# 1. Create the TLS Secret imperatively
+kubectl create secret tls shop-tls --cert=/opt/tls.crt --key=/opt/tls.key
+
+# 2. Create the Ingress with TLS using the imperative --rule flag
+#    The ,tls=<secret-name> suffix on the rule activates TLS termination!
+kubectl create ingress shop-ingress --rule="shop.example.com/*=shop-svc:80,tls=shop-tls"
+```
+
+</details>
+
+**5. Clean-up Script:**
+```bash
+kubectl delete ingress shop-ingress
+kubectl delete secret shop-tls
+kubectl delete svc shop-svc
+rm -f /opt/tls.crt /opt/tls.key
+```
+
+#### Variation 4.1: Multi-Host TLS (Advanced)
+**1. CKAD Style Question:**
+Create an Ingress named `multi-tls-ingress` that terminates TLS for **two** different hosts:
+* `api.corp.com` routing to `api-svc:80` using the TLS Secret `api-tls`.
+* `web.corp.com` routing to `web-svc:80` using the TLS Secret `web-tls`.
+
+**2. Setup Script:**
+```bash
+openssl req -x509 -nodes -days 1 -newkey rsa:2048 -keyout /tmp/api.key -out /tmp/api.crt -subj "/CN=api.corp.com" 2>/dev/null
+openssl req -x509 -nodes -days 1 -newkey rsa:2048 -keyout /tmp/web.key -out /tmp/web.crt -subj "/CN=web.corp.com" 2>/dev/null
+kubectl create secret tls api-tls --cert=/tmp/api.crt --key=/tmp/api.key
+kubectl create secret tls web-tls --cert=/tmp/web.crt --key=/tmp/web.key
+kubectl create svc clusterip api-svc --tcp=80:80
+kubectl create svc clusterip web-svc --tcp=80:80
+```
+
+**3. Testcase Script:**
+```bash
+#!/bin/bash
+echo "--- Testing Variation 4.1 ---"
+[ "$(kubectl get ingress multi-tls-ingress -o jsonpath='{.spec.tls[0].secretName}')" == "api-tls" ] && echo "✅ api-tls wired" || echo "❌ api-tls missing"
+[ "$(kubectl get ingress multi-tls-ingress -o jsonpath='{.spec.tls[1].secretName}')" == "web-tls" ] && echo "✅ web-tls wired" || echo "❌ web-tls missing"
+```
+
+<details>
+
+**4. Solution:**
+```bash
+# Generate the base YAML with one rule
+kubectl create ingress multi-tls-ingress \
+  --rule="api.corp.com/*=api-svc:80,tls=api-tls" \
+  --dry-run=client -o yaml > multi-tls.yaml
+
+vi multi-tls.yaml
+```
+*Add the second rule and second TLS block:*
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multi-tls-ingress
+spec:
+  tls:
+  - hosts:
+    - api.corp.com
+    secretName: api-tls
+  - hosts:                       # ADD FROM HERE
+    - web.corp.com
+    secretName: web-tls          # TO HERE
+  rules:
+  - host: api.corp.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: api-svc
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  - host: web.corp.com           # ADD FROM HERE
+    http:
+      paths:
+      - backend:
+          service:
+            name: web-svc
+            port:
+              number: 80
+        path: /
+        pathType: Prefix         # TO HERE
+```
+```bash
+kubectl apply -f multi-tls.yaml
+```
+
+</details>
+
+**5. Clean-up Script:**
+```bash
+kubectl delete ingress multi-tls-ingress
+kubectl delete secret api-tls web-tls
+kubectl delete svc api-svc web-svc
+rm -f multi-tls.yaml /tmp/api.key /tmp/api.crt /tmp/web.key /tmp/web.crt
+```
+
+---
+
+By leveraging the `--rule` flag (`kubectl create ingress <name> --rule="host/path=svc:port"`), you can bypass writing 20 lines of highly nested YAML for almost every Ingress question on the exam. For TLS, append `,tls=<secret-name>` to the rule — this is the single biggest time-saver for HTTPS Ingress questions.
