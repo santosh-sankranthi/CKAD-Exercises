@@ -203,6 +203,26 @@ Deleting a CronJob deletes all its Jobs and Pods. Deleting a Job deletes its Pod
 
 </details>
 
+### Task 0: the combined concept question:
+a. Create a Job named batch-processor in namespace data-ops
+  Use image busybox, command: echo processing item
+  Total completions: 10, run 3 in parallel
+  Each pod may be retried at most 2 times before that completion is counted as failed
+  Entire job should fail if more than 4 total pod failures occur
+  Job must complete within 120 seconds or be terminated
+  Automatically delete the Job 60 seconds after it finishes
+  Pods must NOT restart automatically on failure
+
+
+b. Create a CronJob named daily-report in namespace reports
+  Image: busybox, command: echo generating report
+  Schedule: every day at 6:30 AM UTC
+  If a previous job is still running, skip the new one — do not run both
+  Keep only last 2 successful job records and 1 failed job record
+  If the CronJob misses its schedule by more than 30 seconds, do not start it
+  Pods should retry on failure with restartPolicy: OnFailure 
+
+
 ### Task 1: The Basic Batch Job (The Most Repeating)
 The most common Job question asks you to run a task to completion with a specific number of successful completions.
 
